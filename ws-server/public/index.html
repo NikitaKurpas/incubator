@@ -1,0 +1,102 @@
+<html>
+    <head>
+        <title>WS example</title>
+    </head>
+
+    <body>
+        <div>
+            <ul id="log"></ul>
+        </div>
+
+        <script>
+            let clientId = localStorage.getItem('cid')
+
+            if (!clientId) {
+                clientId = generateId();
+                localStorage.setItem('cid', clientId)
+            }
+
+            async function main({ clientId }) {
+                const json = (object) => JSON.stringify(object)
+                const logList = document.getElementById('log')
+
+                const getTicket = async () => {
+                    const controller = new AbortController()
+                    const connectTimeout = setTimeout(() => controller.abort(), 2000)
+                    const res = await fetch(`//${window.location.host}/ticket`, { 
+                        method: 'post', 
+                        body: json({ clientId }), 
+                        headers: { 'content-type': 'application/json' },
+                        signal: controller.signal
+                    })
+                    clearTimeout(connectTimeout)
+
+                    const body = await res.json()
+                    ticket = body?.ticket
+                    if (!ticket) {
+                        throw new Error('Server didn\'t return a connection ticket')
+                    }
+
+                    return ticket
+                }
+
+                let reconnectTimeout;
+                const connect = async () => {
+                    let ticket
+                    try {
+                        ticket = await getTicket()
+                    } catch(error) {
+                        console.error('Unable to get a connection ticket:', error)
+                        setTimeout(connect, 5000)
+                        return;
+                    }
+
+                    console.log(!reconnectTimeout ? 'Connecting to server' : 'Reconnecting to server')
+                    let ws = new WebSocket(`ws://localhost:8080/?ticket=${ticket}`)
+                    let connectTimeout = setTimeout(() => {
+                        if (ws.readyState === ws.CONNECTING) {
+                            ws.close();
+                        }
+                    }, 2000)
+
+                    ws.addEventListener('open', () => {
+                        console.log(!reconnectTimeout ? 'Connection successful' : 'Reconnection successful')
+                        if (reconnectTimeout) {
+                            clearTimeout(reconnectTimeout)
+                        }
+
+                        ws.send(json({ type: 'hello', data: { name: `Anonoymous ${clientId}` }}))
+                    })
+
+                    ws.addEventListener('message', (event) => {
+                        console.log('Recieved message', event.data)
+
+                        const listItem = document.createElement('li')
+                        listItem.textContent = event.data
+
+                        logList.appendChild(listItem)
+                    });
+
+                    ws.addEventListener('close', (event) => {
+                        const { code, reason, wasClean } = event
+                        console.log('Disconnected from server:', code, `"${reason || 'Check error code description'}"`, wasClean ? 'clean' : 'dirty')
+
+                        reconnectTimeout = setTimeout(connect, 5000)
+                    })
+
+                    ws.addEventListener('error', (event) => {
+                        console.error('WS error', event)
+                    })
+                }
+
+                await connect();
+            }
+
+            main({ clientId }).catch(console.error)
+
+            function generateId() {
+                return Math.random().toString(36).substr(2, 9);
+            }
+        </script>
+    </body>
+</html>
