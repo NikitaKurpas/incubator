@@ -1,6 +1,7 @@
 import { createServer } from 'http'
 import express from 'express';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 import { WebSocketServer } from 'ws'
 import short from 'short-uuid';
 import type { WebSocket, RawData } from 'ws'
@@ -16,6 +17,11 @@ type ClientData = { clientId: ClientId }
 const tickets = new Map<string, ClientData>()
 const json = (object: object): string => JSON.stringify(object)
 
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} [${req.method}] ${req.path}`)
+    next();
+})
+app.use(cors())
 app.use(express.static('public'))
 app.post('/ticket', bodyParser.json(), (req, res) => {
     if (tickets.size >= 1000) {
