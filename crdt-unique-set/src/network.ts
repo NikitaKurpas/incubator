@@ -111,6 +111,8 @@ export class Network {
           ? "Connection successful"
           : "Reconnection successful"
       );
+
+      this._isConnected = true;
   
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout);
