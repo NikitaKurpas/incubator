@@ -5,7 +5,7 @@ import cx from "classnames";
 export function App() {
   return (
     <BoardProvider>
-      <div className="flex flex-col w-screen h-screen overflow-x-hidden">
+      <div className="w-screen h-screen flex flex-col overflow-x-hidden bg-gray-400">
         <MenuBar />
         <Board className="flex-1" />
       </div>
@@ -15,10 +15,15 @@ export function App() {
 
 function MenuBar({ className }: { className?: string }) {
   return (
-    <div className={cx(className, "flex flex-row items-center justify-start p-2 bg-slate-200")}>
-      <button className="p-2 m-1 bg-white hover:bg-slate-100 rounded shadow">
+    <div
+      className={cx(
+        className,
+        "flex flex-row items-center justify-start p-2 bg-gray-300"
+      )}
+    >
+      <button className="p-2 m-1 bg-white hover:bg-gray-100 rounded shadow">
         <svg
-          className="w-6 h-6 text-slate-500"
+          className="w-6 h-6 text-gray-500"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -51,24 +56,28 @@ function BoardProvider({ children }: { children: React.ReactNode }) {
           title: "Take out the garbage",
           description: "The garbage is overflowing",
           columnId: "column-1",
+          tags: ["errand", "home"],
         },
         {
           id: "card-2",
           title: "Watch my favorite show",
           description: "The new season is about to start",
           columnId: "column-1",
+          tags: ["entertainment", "home"],
         },
         {
           id: "card-3",
           title: "Charge my phone",
           description: "The battery is about to die",
           columnId: "column-2",
+          tags: ["errand", "home"],
         },
         {
           id: "card-4",
           title: "Cook dinner",
           description: "We need to eat",
           columnId: "column-3",
+          tags: ["errand", "home"],
         },
       ],
     }),
@@ -117,18 +126,25 @@ type KanbanCard = {
   title: string;
   description: string;
   columnId: Id;
+  tags: string[];
 };
 
 function Column({ id, className }: { id: Id; className?: string }) {
   const column = useColumn(id);
   return (
-    <section className={className}>
-      <h2 className="text-xl font-bold">{column.title}</h2>
-      <div className="flex flex-col">
-        {column.cards.map((cardId) => (
-          <Card key={cardId} id={cardId} />
-        ))}
+    <section
+      className={cx(
+        className,
+        "p-2 m-2 flex flex-col gap-2 bg-gray-200 rounded"
+      )}
+    >
+      <div className="px-3 py-2">
+        <h2 className="text-xl font-bold text-gray-800">{column.title}</h2>
+        <div className="text-gray-500">{column.cards.length} cards</div>
       </div>
+      {column.cards.map((cardId) => (
+        <Card key={cardId} id={cardId} />
+      ))}
     </section>
   );
 }
@@ -149,12 +165,21 @@ function Card({ id }: { id: Id }) {
   return (
     <>
       <div
-        className="p-2 m-1 bg-white hover:bg-slate-100 rounded shadow cursor-pointer"
+        className="p-3 bg-white hover:bg-slate-100 rounded shadow cursor-pointer"
         onClick={() => setDetailsOpen(true)}
       >
-        <h3 className="text-lg font-bold">{card.title}</h3>
+        <h3 className="text-lg font-bold mb-3">{card.title}</h3>
+        <div className="flex gap-2">
+          {card.tags.map((tag) => (
+            <CardTag tag={tag} />
+          ))}
+        </div>
       </div>
-      <CardDetails id={id} isOpen={areDetailsOpen} />
+      <CardDetails
+        id={id}
+        isOpen={areDetailsOpen}
+        onClose={() => setDetailsOpen(false)}
+      />
     </>
   );
 }
@@ -168,11 +193,27 @@ function useCard(id: Id) {
   return card;
 }
 
+function CardTag({ tag }: { tag: string }) {
+  return (
+    <span className="px-2 py-1 text-sm text-gray-800 bg-gray-200 rounded">
+      #{tag}
+    </span>
+  );
+}
+
 const modalRoot = document.createElement("div");
 modalRoot.setAttribute("id", "modal-root");
 document.body.appendChild(modalRoot);
 
-function CardDetails({ id, isOpen }: { id: Id; isOpen: boolean }) {
+function CardDetails({
+  id,
+  isOpen,
+  onClose,
+}: {
+  id: Id;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
   const card = useCard(id);
 
   if (!isOpen) {
@@ -190,7 +231,10 @@ function CardDetails({ id, isOpen }: { id: Id; isOpen: boolean }) {
   // );
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-black/30">
+    <div
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-black/10"
+      onClick={onClose}
+    >
       <div className="bg-white rounded shadow p-4">
         <h2 className="text-xl font-bold">{card.title}</h2>
         <p>{card.description}</p>
