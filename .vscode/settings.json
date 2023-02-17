@@ -1,0 +1,5 @@
+{
+  "tailwindCSS.colorDecorators": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file"
+}
