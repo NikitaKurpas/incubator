@@ -16,7 +16,20 @@
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [1234],
+	"forwardPorts": [
+		1234
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"pomdtr.excalidraw-editor",
+				"EditorConfig.EditorConfig",
+				"esbenp.prettier-vscode",
+				"bradlc.vscode-tailwindcss",
+				"dbaeumer.vscode-eslint"
+			]
+		}
+	},
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "uname -a",
