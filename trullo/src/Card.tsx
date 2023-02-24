@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CardDialog } from "./CardDialog";
 import { Id, useCard } from "./data";
-import { Chip } from "./Tag";
+import { Chip } from "./Chip";
 
 export function Card({ id }: { id: Id }) {
   const card = useCard(id);

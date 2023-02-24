@@ -18,6 +18,7 @@ export type KanbanColumn = {
   id: Id;
   title: string;
   cards: Id[];
+  boardId: Id;
 };
 
 export type KanbanCard = {
@@ -65,6 +66,12 @@ export function useBoardActions(): BoardActions {
       addCard: (input) => {
         dispatch({ type: "ADD_CARD", payload: input });
       },
+      updateCard: (input) => {
+        dispatch({ type: "UPDATE_CARD", payload: input });
+      },
+      moveCard: (input) => {
+        dispatch({ type: "MOVE_CARD", payload: input });
+      },
     }),
     [dispatch]
   );
@@ -74,11 +81,24 @@ export function useBoardActions(): BoardActions {
 
 type BoardActions = {
   addCard: AddCardFn;
+  updateCard: UpdateCardFn;
+  moveCard: MoveCardFn;
 };
 type AddCardFn = (input: AddCardPayload) => void;
+type AddCardPayload = { title: string; columnId: string };
+type UpdateCardFn = (input: UpdateCardPayload) => void;
+type UpdateCardPayload = {
+  id: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+};
+type MoveCardFn = (input: MoveCardPayload) => void;
+type MoveCardPayload = { id: string; columnId: string };
 
 export function BoardProvider({ children }: { children: React.ReactNode }) {
   const [board, dispatch] = useReducer(boardReducer, initialBoard);
+  console.log("board", board);
 
   return (
     <BoardDispatchContext.Provider value={dispatch}>
@@ -115,21 +135,79 @@ const boardReducer = (
         }),
       };
     }
+    case "UPDATE_CARD": {
+      const { id, title, description, tags } = action.payload;
+
+      return {
+        ...state,
+        cards: state.cards.map((card) => {
+          if (card.id === id) {
+            return {
+              ...card,
+              title: title ?? card.title,
+              description: description ?? card.description,
+              tags: tags ?? card.tags,
+            };
+          }
+          return card;
+        }),
+      };
+    }
+    case "MOVE_CARD": {
+      const { id, columnId } = action.payload;
+
+      return {
+        ...state,
+        cards: state.cards.map((card) => {
+          if (card.id === id) {
+            return {
+              ...card,
+              columnId,
+            };
+          }
+          return card;
+        }),
+        columns: state.columns.map((column) => {
+          if (column.id === columnId) {
+            return {
+              ...column,
+              cards: [...column.cards, id],
+            };
+          }
+          return {
+            ...column,
+            cards: column.cards.filter((cardId) => cardId !== id),
+          };
+        }),
+      };
+    }
     default: {
       return state;
     }
   }
 };
 
-type BoardReducerAction = { type: "ADD_CARD"; payload: AddCardPayload };
-type AddCardPayload = { title: string; columnId: string };
+type BoardReducerAction =
+  | { type: "ADD_CARD"; payload: AddCardPayload }
+  | { type: "UPDATE_CARD"; payload: UpdateCardPayload }
+  | { type: "MOVE_CARD"; payload: MoveCardPayload };
 
 const initialBoard: KanbanBoard = {
   id: "board-1",
   columns: [
-    { id: "column-1", title: "To do", cards: ["card-1", "card-2"] },
-    { id: "column-2", title: "In progress", cards: ["card-3"] },
-    { id: "column-3", title: "Done", cards: ["card-4"] },
+    {
+      id: "column-1",
+      title: "To do",
+      cards: ["card-1", "card-2"],
+      boardId: "board-1",
+    },
+    {
+      id: "column-2",
+      title: "In progress",
+      cards: ["card-3"],
+      boardId: "board-1",
+    },
+    { id: "column-3", title: "Done", cards: ["card-4"], boardId: "board-1" },
   ],
   cards: [
     {

@@ -1,14 +1,58 @@
 // import { createPortal } from "react-dom";
 
-import { FC, HTMLAttributes } from "react";
-import { Id, useCard, useColumn } from "./data";
-import { Chip } from "./Tag";
+import {
+  FC,
+  HTMLAttributes,
+  PropsWithChildren,
+  createContext,
+  useState,
+  useContext,
+} from "react";
+import { Id, useBoard, useBoardActions, useCard, useColumn } from "./data";
+import { Chip } from "./Chip";
+import { XMarkIcon, TagIcon, Bars4Icon } from "@heroicons/react/20/solid";
 
-const modalRoot = document.createElement("div");
-modalRoot.setAttribute("id", "modal-root");
-document.body.appendChild(modalRoot);
+export const useCardDialog = () => {
+  const context = useContext(CardDialogContext);
+  if (!context) {
+    throw new Error("useCardDialog must be used within a CardDialogProvider");
+  }
+  return context;
+};
 
-export function CardDialog({
+const CardDialogContext = createContext<{
+  isOpen: boolean;
+  open: (id: Id) => void;
+  close: () => void;
+  cardId: Id | null;
+} | null>(null);
+
+export const CardDialogProvider: FC<PropsWithChildren> = ({ children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [cardId, setCardId] = useState<Id | null>(null);
+
+  const open = (id: Id) => {
+    setCardId(id);
+    setIsOpen(true);
+  };
+
+  const close = () => {
+    setIsOpen(false);
+  };
+
+  return (
+    <CardDialogContext.Provider value={{ isOpen, open, close, cardId }}>
+      {children}
+      <CardDialog
+        isOpen={isOpen}
+        id={cardId}
+        onClose={() => setIsOpen(false)}
+      />
+    </CardDialogContext.Provider>
+  );
+};
+
+function CardDialog({
   id,
   isOpen,
   onClose,
@@ -17,8 +61,11 @@ export function CardDialog({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const { cardId } = useCardDialog();
   const card = useCard(id);
   const column = useColumn(card.columnId);
+  const board = useBoard();
+  const { moveCard } = useBoardActions();
 
   if (!isOpen) {
     return null;
@@ -44,73 +91,55 @@ export function CardDialog({
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <XMarkIcon className="h-6 w-6" />
         </button>
 
         <h1 className="mb-8 text-2xl">{card.title}</h1>
 
         <div className="mb-8 grid grid-cols-3 gap-y-4 items-baseline">
           <span className="flex gap-2 items-baseline text-gray-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6 self-center"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 6h.008v.008H6V6z"
-              />
-            </svg>
+            <TagIcon className="h-6 w-6 self-center" />
             Tags
           </span>
           <div className="col-span-2 flex gap-2">
             {card.tags.map((tag) => (
-              <Chip tag={tag} key={tag} />
+              <Chip label={tag} key={tag} />
             ))}
           </div>
           <span className="flex gap-2 items-baseline text-gray-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6 self-center"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5"
-              />
-            </svg>
+            <Bars4Icon className="h-6 w-6 self-center" />
             List
           </span>
           <div className="col-span-2">
-            <button className="px-3 py-1 rounded bg-gray-200 text-sm text-gray-800 font-medium">
-              {column.title}
-            </button>
+            <select
+              value={column.id}
+              onChange={(e) => moveCard({ id, columnId: e.target.value })}
+              className="block w-full text-sm text-gray-800 font-medium"
+            >
+              {board.columns.map((column) => (
+                <option key={column.id} value={column.id}>
+                  {column.title}
+                </option>
+              ))}
+            </select>
+            {/* <Menu as="div" className="relative">
+              <Menu.Button className="px-3 py-1 rounded bg-gray-200 text-sm text-gray-800 font-medium">
+                {column.title}
+              </Menu.Button>
+
+              <Menu.Items className="absolute left-0 w-32 p-1 bg-white rounded shadow-lg">
+                {board.columns.map((column) => (
+                  <Menu.Item>
+                    <button
+                      key={column.id}
+                      className="block w-full ui-active:bg-blue-100"
+                    >
+                      {column.title}
+                    </button>
+                  </Menu.Item>
+                ))}
+              </Menu.Items>
+            </Menu> */}
           </div>
         </div>
 
@@ -128,3 +157,7 @@ const Backdrop: FC<HTMLAttributes<HTMLDivElement>> = (props) => (
     {...props}
   ></div>
 );
+
+// const modalRoot = document.createElement("div");
+// modalRoot.setAttribute("id", "modal-root");
+// document.body.appendChild(modalRoot);
