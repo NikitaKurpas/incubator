@@ -4,8 +4,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+  MD 3 to Tailwind mappings:
+  - surface: bg-gray-50
+  - surface-container: bg-gray-100
+  - surface-container-lowest: white
+  - surface-container-highest: bg-gray-200
+*/
+
 @layer base {
   html {
     font-family: Poppins, system-ui, sans-serif;
   }
+
+  body {
+    @apply bg-gray-50;
+  }
+}
+
+.column {
+  @apply flex flex-col gap-2;
+}
+
+.board {
+  @apply flex flex-row gap-2;
 }
