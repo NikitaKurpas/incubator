@@ -1,0 +1,77 @@
+version: "3.8"
+
+services:
+  sandbox:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    env_file:
+      # Ensure that the variables in .env match the same variables in devcontainer.json
+      - .env
+    volumes:
+      - ../..:/workspaces:cached
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+    # Runs sandbox on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+    networks:
+      - sandbox-net
+
+    # Use "forwardPorts" in **devcontainer.json** to forward a sandbox port locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  # postgres:
+  #   image: postgres:latest
+  #   restart: unless-stopped
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   # environment:
+  #   #   POSTGRES_USER: postgres
+  #   #   POSTGRES_DB: postgres
+  #   #   POSTGRES_PASSWORD: postgres
+  #   env_file:
+  #     # Ensure that the variables in .env match the same variables in devcontainer.json
+  #     - .env
+  #   networks:
+  #     - sandbox-net
+
+  #   # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
+  #   # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  # mongo:
+  #   image: mongo:latest
+  #   restart: unless-stopped
+  #   volumes:
+  #     - mongodb-data:/data/db
+  #   # environment:
+  #   #  MONGO_INITDB_ROOT_USERNAME: root
+  #   #  MONGO_INITDB_ROOT_PASSWORD: example
+  #   #  MONGO_INITDB_DATABASE: your-database-here
+  #   env_file:
+  #     # Ensure that the variables in .env match the same variables in devcontainer.json
+  #     - .env
+  #   networks:
+  #     - sandbox-net
+
+  #   # Add "forwardPorts": ["27017"] to **devcontainer.json** to forward MongoDB locally.
+  #   # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  qdrant:
+    image: qdrant/qdrant
+    volumes:
+      - qdrant-data:/qdrant/storage
+    env_file:
+      # Ensure that the variables in .env match the same variables in devcontainer.json
+      - .env
+    networks:
+      - sandbox-net
+
+    # Add "forwardPorts": ["6333"] to **devcontainer.json** to forward MongoDB locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+networks:
+  sandbox-net:
+
+volumes:
+  # postgres-data:
+  # mongodb-data:
+  qdrant-data:
