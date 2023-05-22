@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  retriever:
+    build:
+      context: ./chatgpt-retrieval-plugin
+      dockerfile: Dockerfile
+    image: chatgpt-retrieval-plugin
+    container_name: chatgpt-retrieval-plugin
+    ports:
+      - 3333:3333
+    environment:
+      - PORT=3333
+    env_file:
+      - .env
+    networks:
+      - langchain-sandbox-net
+
+  qdrant:
+    image: qdrant/qdrant
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - langchain-sandbox-net
+
+networks:
+  langchain-sandbox-net:
+
+volumes:
+  qdrant-data:

@@ -1,5 +1,7 @@
 {
   "tailwindCSS.colorDecorators": false,
   "editor.formatOnSave": true,
-  "editor.formatOnSaveMode": "file"
+  "editor.formatOnSaveMode": "file",
+  "python.defaultInterpreterPath": "/home/codespace/.python/current/bin/python",
+  "python.analysis.typeCheckingMode": "basic"
 }
